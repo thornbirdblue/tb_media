@@ -89,6 +89,8 @@ int main(int argc,char *argv[])
 			print_entity(&entity);
 		}
 
+		close(dev_fd);
+
 		num_media_devices++;
 	}
 
