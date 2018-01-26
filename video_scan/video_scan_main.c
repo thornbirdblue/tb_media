@@ -51,14 +51,26 @@ int main(int argc,char *argv[])
 	while(1)
 	{
 		snprintf(dev_name,sizeof(dev_name),"/dev/video%d",num_video_devices);
-		printf("dev name:%s\n",dev_name);
 		dev_fd = open(dev_name,O_RDONLY);
+		
 		if(dev_fd < 0){
-			printf("\nVideo scan is Over! num_video_devices:%d!\n",num_video_devices);
-			break;
-		}
+			if(errno == ENOENT)			// No such file or directory
+			{
+				printf("Video scan is Over! The number of VideoDevice: %d!\n\n",num_video_devices);		
+				close(dev_fd);
+				break;
+			}
+			else
+			{
+				printf("\n!!!Error!!! Video%d: %s!\n",num_video_devices,strerror(errno));
+				close(dev_fd);
+				num_video_devices++;
+				continue;
+			}
 
-		print_video_info(dev_fd,num_video_devices);
+		}
+		else
+			print_video_info(dev_fd,num_video_devices);
 
 		close(dev_fd);
 
@@ -77,7 +89,7 @@ int print_video_cap(int fd)
 	rc = ioctl(fd,VIDIOC_QUERYCAP,&cap);
 
 	if(rc < 0){
-		printf("\nError: Can't querycap!!!\n");
+		printf("Error: Can't querycap!!!\n");
 		return rc;
 	}
 	printf("v4l2 capability:\n");
@@ -126,7 +138,7 @@ int print_video_enumfmt(int fd)
 	rc = ioctl(fd,VIDIOC_ENUM_FMT,&fmt);
 
 	if(rc < 0){
-		printf("\nError: Can't ENUM FORMAT!!!\n");
+		printf("Error: Can't ENUM FORMAT!!!\n");
 		return rc;
 	}
 
@@ -156,9 +168,11 @@ int print_video_enumfmt(int fd)
 void print_video_info(int fd,int num_video)
 {
 	int i;
-	printf("\n/dev/video%d:\n",num_video);
+	
+	printf("\nVideo%d:\n",num_video);
 	// cap
-	print_video_cap(fd);
+	if(print_video_cap(fd)<0)
+		return;
 	
 	// enum fmt
 	print_video_enumfmt(fd);
